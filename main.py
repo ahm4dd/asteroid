@@ -1,6 +1,8 @@
 import pygame
 from constants import *
-
+from player import *
+from asteroid import *
+from asteroidfield import *
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -8,16 +10,45 @@ def main():
     running = True
     dt = 0
 
-    player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
+    updatable = pygame.sprite.Group()
+    drawable = pygame.sprite.Group()
+    asteroids = pygame.sprite.Group()
+    shots = pygame.sprite.Group()
 
-    while running:
-        # poll for events
-        # pygame.QUIT event means the user clicked X to close your window
+    Player.containers = (updatable,drawable)
+    Asteroid.containers = (asteroids,updatable,drawable)
+    AsteroidField.containers = (updatable)
+    Shot.containers = (shots,updatable,drawable)
+
+    x = SCREEN_WIDTH / 2
+    y = SCREEN_HEIGHT / 2
+    player = Player(x,y)
+    asteroid_field = AsteroidField()
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                return
+            
+        for object in updatable:
+            object.update(dt)
 
+        screen.fill("black")
+        for object in drawable:
+            object.draw(screen)
         
+        for object in asteroids:
+            if object.check_collision(player):
+                print("Game over!")
+                return
+            for shot in shots:
+                if object.check_collision(shot):
+                    object.split()
+                    shot.kill()
+            
+        pygame.display.flip()
+
+        # limit the framerate to 60 FPS
+        dt = clock.tick(240) / 1000
 
 if __name__ == "__main__":
     main()
